@@ -1,21 +1,15 @@
-import signUpUser from './4-all-reject';
-import uploadPhoto from './5-all-reject';
+import signUpUser from './4-user-promise.js';
+import uploadPhoto from './5-photo-reject.js';
 
-export default async function handleProfileSignup(
-  firstName,
-  lastName,
-  fileName,
-) {
-  const res = [];
-  try {
-    const user = await signUpUser(firstName, lastName);
-    res.push({ status: 'fulfilled', value: user });
-    await uploadPhoto(fileName);
-  } catch (err) {
-    res.push({
-      status: 'rejected',
-      value: `Error: ${fileName} cannot be processed`,
+export default function handleProfileSignup(firstName, lastName, fileName) {
+  const userPromise = signUpUser(firstName, lastName);
+  const photoPromise = uploadPhoto(fileName);
+
+  return Promise.allSettled([userPromise, photoPromise])
+    .then((results) => {
+      return results.map((result) => ({
+        status: result.status,
+        value: result.status === 'fulfilled' ? result.value : result.reason,
+      }));
     });
-  }
-  return res;
 }
